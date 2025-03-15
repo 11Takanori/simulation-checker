@@ -1,0 +1,179 @@
+view ResultPair? from TRIV to META-LEVEL is
+  sort Elt to ResultPair? .
+endv
+
+fmod SIMULATION-CHECKER is
+  pr LEXICAL .
+  pr META-LEVEL .
+  pr LIST{ResultPair?} .
+
+  sorts SimulationResult SimulationResult? .
+  subsort SimulationResult < SimulationResult? .
+
+  op success : -> SimulationResult [ctor] .
+  op noStateTransition : -> SimulationResult? [ctor] .
+  op notExistSimulationRelation : -> SimulationResult? [ctor] .
+  op notFoundStateWithSimulationRelation : -> SimulationResult? [ctor] .
+
+  op checkSimulationPerRewriteRule : Module Qid Module QidList Module QidList Strategy -> SimulationResult? .
+  op checkSimulationPerRewriteRule* : Module Qid Module QidList Module QidList List{ResultPair?} -> SimulationResult? .
+  op checkSimulationPerRewriteRule** : Module Qid Module QidList Module QidList ResultPair? -> SimulationResult? .
+  op stateTransitionUsingRewriteRule : Module QidList Strategy -> List{ResultPair?} .
+  op stateTransitionUsingRewriteRule* : Module QidList Strategy Nat -> List{ResultPair?} .
+  op rewriteUsingRewriteRule : Module QidList Strategy Nat -> ResultPair? .
+  op checkSimulationRelation : Module Qid Module QidList Module QidList -> ResultPair? .
+  op searchStateWithSimulationRelation : Qid Module QidList Module QidList -> ResultTriple? .
+  op toState : String -> String .
+  op createState : Module QidList -> String .
+  op makeSimulationRelation : Qid Module QidList Module QidList -> String .
+  op createConfigVar : Sort -> Variable .
+
+  vars QSR : Qid .
+  vars QIL QSL QSAL : QidList .
+  vars V : Variable .
+  vars RP : ResultPair .
+  vars RP? RP?' : ResultPair? .
+  vars RP?L : List{ResultPair?} .
+  vars SR? : SimulationResult? .
+  vars RT? : ResultTriple? .  
+  vars M MA MS : Module .
+  vars ST : Strategy .
+  vars N : Nat .
+
+  ceq checkSimulationPerRewriteRule(MS, QSR, M, QSL, MA, QSAL, ST)
+    = if size(RP?L) > 0 then
+        checkSimulationPerRewriteRule*(MS, QSR, M, QSL, MA, QSAL, RP?L)
+      else
+        noStateTransition
+      fi
+  if RP?L := stateTransitionUsingRewriteRule(M, QSL, ST) .
+  eq checkSimulationPerRewriteRule*(MS, QSR, M, QSL, MA, QSAL, nil)
+    = success .
+  ceq checkSimulationPerRewriteRule*(MS, QSR, M, QSL, MA, QSAL, RP? RP?L)
+    = if SR? :: SimulationResult then
+        checkSimulationPerRewriteRule*(MS, QSR, M, QSL, MA, QSAL, RP?L)
+      else
+        SR?
+      fi
+  if SR? := checkSimulationPerRewriteRule**(MS, QSR, M, QSL, MA, QSAL, RP?) .
+  ceq checkSimulationPerRewriteRule**(MS, QSR, M, QSL, MA, QSAL, RP?)
+    = if RP?' :: ResultPair and getTerm(RP?') == 'true.Bool then
+        if searchStateWithSimulationRelation(
+             QSR, 
+             M,
+             metaPrettyPrint(M, none, getTerm(RP?), none), 
+             MA,
+             QSAL
+           ) :: ResultTriple then
+          success
+        else
+          notFoundStateWithSimulationRelation
+        fi
+      else
+        notExistSimulationRelation
+      fi
+  if RP?' := checkSimulationRelation(MS, QSR, M, QSL, MA, QSAL) .
+  eq stateTransitionUsingRewriteRule(M, QSL, ST)
+    = stateTransitionUsingRewriteRule*(M, QSL, ST, 0) .
+  ceq stateTransitionUsingRewriteRule*(M, QSL, ST, N)
+    = if RP? :: ResultPair then
+        RP? stateTransitionUsingRewriteRule*(M, QSL, ST, s(N))
+      else
+        nil
+      fi
+  if RP? := rewriteUsingRewriteRule(M, QSL, ST, N) .
+  eq rewriteUsingRewriteRule(M, QSL, ST, N)
+    = metaSrewrite(
+        M, 
+        getTerm(
+          metaParse(
+            M, 
+            QSL, 
+            anyType
+          )
+        ), 
+        ST, breadthFirst, N
+      ) .
+  eq checkSimulationRelation(MS, QSR, M, QSL, MA, QSAL) 
+    = metaReduce(
+        MS,
+        getTerm(
+          metaParse(
+            MS, 
+            tokenize(
+              makeSimulationRelation(
+                QSR, 
+                M, 
+                tokenize(toState(printTokens(QSL))), 
+                MA, 
+                tokenize(toState(printTokens(QSAL)))
+              )
+            ), 
+            anyType
+          )
+        )
+      ) .
+  ceq searchStateWithSimulationRelation(QSR, M, QSL, MA, QSAL) 
+    = metaSearch(
+        MA, 
+        getTerm(metaParse(MA, QSAL, anyType)), 
+        getTerm(metaParse(MA, V, anyType)),
+        getTerm(
+          metaParse(
+            MA, 
+            tokenize(
+              makeSimulationRelation(
+                QSR, 
+                M, 
+                tokenize(toState(createState(M, QSL))), 
+                MA, 
+                tokenize(toState(string(V))))),
+            anyType)) 
+          = 'true.Bool,
+        '*, unbounded, 0
+      )
+  if V := createConfigVar(getType(metaParse(MA, QSAL, anyType))) .
+  eq makeSimulationRelation(QSR, M, QSL, MA, QSAL) = 
+    string(QSR) + "(" + createState(M, QSL) + "," + createState(MA, QSAL) + ")" .
+  eq createState(M, QIL) 
+    = printTokens(
+        metaPrettyPrint(
+          M, 
+          none, 
+          getTerm(
+            metaReduce(
+              M, 
+              getTerm(metaParse(M, QIL, anyType))
+            )
+          ), 
+          none
+        )
+      ) .
+  eq toState(S:String) = "state(" + S:String + ")" .
+  eq createConfigVar(S:Sort) = qid("C:" + string(S:Sort)) .
+endfm
+
+fmod SIMULATION-CHECKER-IO is
+  pr SIMULATION-CHECKER .
+
+  vars S1 S2 S3 S4 S5 S6 S7 : String .
+  vars R? : SimulationResult? .
+
+  op simulate<<_|_> <_|_> <_|_>_> : String String String String String String String -> String .
+  op resultToString : SimulationResult? -> String .
+  ceq simulate<< S1 | S2 > < S3 | S4 > < S5 | S6 > S7 >
+    = resultToString(R?)
+    if R? := checkSimulationPerRewriteRule(
+               upModule(tokenize(S1), false),
+               tokenize(S2),
+               upModule(tokenize(S3), false),
+               tokenize(S4),
+               upModule(tokenize(S5), false),
+               tokenize(S6),
+               tokenize(S7)[none]{empty}
+             ) .
+  eq resultToString(success) = "Success" .
+  eq resultToString(noStateTransition) = "NoStateTransition" .
+  eq resultToString(notExistSimulationRelation) = "NotExistSimulationRelation" .
+  eq resultToString(notFoundStateWithSimulationRelation) = "NotFoundStateWithSimulationRelation" .
+endfm

@@ -1,0 +1,845 @@
+fmod NAT+ is
+  pr NAT .
+
+  sort Nat+ .  --- Nat+ is used to express (arbitrary) natural numbers.
+  subsort Nat < Nat+ .
+
+  op _=Nat+_ : Nat+ Nat+ -> Bool [comm] .
+  op _>=_ : Nat+ Nat+ -> Bool [ditto] .
+  op _+_ : Nat+ Nat+ -> Nat+ [ditto] .
+  op _rem_ : Nat+ Nat+ -> Nat+ [ditto] .
+  op s_ : Nat+ -> Nat+ [ditto] .
+
+  vars X Y : Nat+ .
+
+  eq (X =Nat+ X) = true .
+  eq (0 =Nat+ s(Y)) = false .
+  eq (s(X) =Nat+ s(Y)) = (X =Nat+ Y) .
+  eq X >= X = true .
+  eq s(X) >= X = true .
+  eq X >= s(X) = false .
+endfm
+
+view Nat+ from TRIV to NAT+ is
+  sort Elt to Nat+ .
+endv
+
+fmod TRUTH-VALUE+ is
+  pr TRUTH-VALUE .
+
+  sort Bool+ . --- Bool+ is used to express (arbitrary) boolean value.
+  subsort Bool < Bool+ .
+
+  ops bool : -> Bool+ .
+endfm
+
+fmod BOOL-OPS+ is
+  pr TRUTH-VALUE+ .
+
+  op _=_ : Bool+ Bool+ -> Bool [comm] .
+  op _!=_ : Bool+ Bool+ -> Bool [comm] .
+  op not_ : Bool+ -> Bool+ [ditto] .
+
+  vars B+ B1+ B2+ : Bool+ .
+  vars B1 B2 : Bool .
+
+  eq (B+ = B+) = true .
+  eq ((not B+) = B+) = false .
+  eq (true = false) = false .
+  eq (B1+ != B2+) = not (B1+ = B2+) .
+  eq not (not B+) = B+ .
+endfm
+
+fmod BOOL+ is
+  pr BOOL-OPS+ .
+endfm
+
+fmod SOUP {D :: TRIV} is
+  sort Soup{D} .
+  subsort D$Elt < Soup{D} .
+
+  op empty : -> Soup{D} [ctor] .
+  op _ _ : Soup{D} Soup{D} -> Soup{D} [ctor assoc comm id: empty] .
+
+  var E : D$Elt .
+  var S : Soup{D} .
+
+  eq E E = E .
+endfm
+
+fmod QUEUE {X :: TRIV} is
+  pr NAT .
+
+  sorts NeQueue{X} Queue{X} .
+  subsorts X$Elt < NeQueue{X} < Queue{X} .
+
+  op nil : -> Queue{X} [ctor] .
+  op __ : Queue{X} Queue{X} -> Queue{X} [assoc id: nil ctor] .
+  op __ : NeQueue{X} Queue{X} -> NeQueue{X} [ctor ditto] .
+  op __ : Queue{X} NeQueue{X} -> NeQueue{X} [ctor ditto] .
+  op top : NeQueue{X} -> X$Elt .
+  op get : NeQueue{X} -> Queue{X} .
+  op length : Queue{X} -> Nat .
+  op length : NeQueue{X} -> NzNat .
+  op $length : Queue{X} Nat -> Nat .
+
+  var E : X$Elt .
+  var Q Q1 Q2 : Queue{X} .
+  var C : Nat .
+
+  eq top (E Q) = E .
+  eq get (E Q) = Q .
+  eq length(Q) = $length(Q, 0) .
+  eq $length(nil, C) = C .
+  eq $length(E Q, C) = $length(Q, C + 1) .
+endfm
+
+fmod N-LIST is
+  pr NAT+ .
+  pr LIST{Nat+} .
+
+  op _=_ : List{Nat+} List{Nat+} -> Bool [comm] .
+  op _!=_ : List{Nat+} List{Nat+} -> Bool [comm] .
+  op mk : Nat+ -> List{Nat+} .
+  op length : List{Nat+} -> Nat .
+  op $length : List{Nat+} Nat -> Nat .
+  op subsequence : List{Nat+} List{Nat+} -> Bool .
+
+  var X X1 X2 C : Nat+ .
+  vars L L1 L2 : List{Nat+} .
+
+  eq (nil = nil) = true .
+  eq (nil = (X L)) = false .
+  eq ((X1 L1) = (X2 L2)) = if ((X1 =Nat+ X2)) then (L1 = L2) else false fi .
+  eq (L = L) = true .
+  eq (L1 != L2) = not (L1 = L2) .
+
+  eq mk(0) = 0 nil .
+  eq mk(s(X)) = s(X) mk(X) .
+  eq length(L) = $length(L, 0) .
+  eq $length(nil, C) = C .
+  eq $length(X L, C) = $length(L, C + 1) .
+  eq subsequence(L, L) = true .
+  eq subsequence((L mk(X)), mk(X)) = true .
+  eq subsequence(L1 X, L2 X) = subsequence(L1, L2) .
+  eq subsequence(L, nil) = true .
+  eq subsequence(nil, nil) = true .
+  ceq subsequence(L1, L2) = false if L1 != L2 .
+endfm
+
+fmod PCELL is
+  pr NAT+ .
+  pr BOOL+ .
+
+  sort PCell .
+
+  op empty : -> PCell [ctor] .
+  op pcell : Bool+ Nat+ -> PCell [ctor] .
+  op _=_ : PCell PCell -> Bool [comm] .
+  op _!=_ : PCell PCell -> Bool [comm] .
+  op bit : PCell -> Bool+ .
+  op index : PCell -> Nat+ .
+
+  vars B B1 B2 : Bool+ .
+  vars I I1 I2 : Nat+ .
+  vars C C1 C2 : PCell .
+
+  eq (empty = empty) = true .
+  eq (empty = pcell(B, I)) = false .
+  eq (pcell(B1, I1) = pcell(B2, I2)) = (B1 = B2) and (I1 =Nat+ I2) .
+  eq (C1 != C2) = not (C1 = C2) .
+  eq bit(pcell(B, I)) = B .
+  eq index(pcell(B, I)) = I .
+endfm
+
+view PCell from TRIV to PCELL is
+  sort Elt to PCell .
+endv
+
+fmod BCELL is
+  pr BOOL+ .
+
+  sort BCell .
+
+  op empty : -> BCell [ctor] .
+  op bcell : Bool+ -> BCell [ctor] .
+  op _=_ : BCell BCell -> Bool [comm] .
+  op _!=_ : BCell BCell -> Bool [comm] .
+  op bit : BCell -> Bool+ .
+
+  var B B1 B2 : Bool+ .
+  var C C1 C2 : BCell .
+
+  eq (empty = empty) = true .
+  eq (empty = bcell(B)) = false .
+  eq (bcell(B1) = bcell(B2)) = (B1 = B2) .
+  eq (C1 != C2) = not (C1 = C2) .
+  eq bit(bcell(B)) = B .
+endfm
+
+view BCell from TRIV to BCELL is
+  sort Elt to BCell .
+endv
+
+fmod FRAME is
+  pr NAT+ .
+
+  sort Frame .
+
+  op empty : -> Frame [ctor] .
+  op frame : Nat+ Nat+ -> Frame [ctor] .
+  op seq : Frame -> Nat+ .
+  op index : Frame -> Nat+ .
+
+  vars S I : Nat+ .
+
+  eq seq(frame(S, I)) = S .
+  eq index(frame(S, I)) = I .
+endfm
+
+view Frame from TRIV to FRAME is
+  sort Elt to Frame .
+endv
+
+fmod ACK is
+  pr NAT+ .
+
+  sort Ack .
+
+  op empty : -> Ack [ctor] .
+  op ack : Nat+ -> Ack [ctor] .
+  op seq : Ack -> Nat+ .
+
+  vars S : Nat+ .
+
+  eq seq(ack(S)) = S .
+endfm
+
+view Ack from TRIV to ACK is
+  sort Elt to Ack .
+endv
+
+fmod BCP-STATE is
+  pr NAT+ .
+  pr LIST{Nat+} .
+
+  sort BCPState .
+
+  op bcp : Nat+ List{Nat+} -> BCPState [ctor] .
+  op getIndex : BCPState -> Nat+ .
+  op getList : BCPState -> List{Nat+} .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+
+  eq getIndex(bcp(I, L)) = I .
+  eq getList(bcp(I, L)) = L .
+endfm
+
+fmod BCP2-STATE is
+  pr NAT+ .
+  pr LIST{Nat+} .
+  pr BOOL+ .
+
+  sort BCP2State .
+
+  op bcp2 : Bool+ Nat+ Bool+ List{Nat+} -> BCP2State [ctor] .
+  op getIndex : BCP2State -> Nat+ .
+  op getList : BCP2State -> List{Nat+} .
+  op getBit1 : BCP2State -> Bool+ .
+  op getBit2 : BCP2State -> Bool+ .
+
+  vars B1 B2 : Bool+ .
+  var I : Nat+ .
+  var L : List{Nat+} .
+
+  eq getIndex(bcp2(B1, I, B2, L)) = I .
+  eq getList(bcp2(B1, I, B2, L)) = L .
+  eq getBit1(bcp2(B1, I, B2, L)) = B1 .
+  eq getBit2(bcp2(B1, I, B2, L)) = B2 .
+endfm
+
+fmod SCP-STATE is
+  pr NAT+ .
+  pr LIST{Nat+} .
+  pr PCELL .
+  pr BCELL .
+
+  sort SCPState .
+
+  op scp : PCell BCell Bool+ Nat+ Bool+ List{Nat+} -> SCPState [ctor] .
+  op scp : Bool+ Nat+ Bool+ List{Nat+} -> SCPState [ctor] .
+  op getCell1 : SCPState -> PCell .
+  op getCell2 : SCPState -> BCell .
+  op getBit1 : SCPState -> Bool+ .
+  op getIndex : SCPState -> Nat+ .
+  op getBit2 : SCPState -> Bool+ .
+  op getList : SCPState -> List{Nat+} .
+
+  vars B1 B2 : Bool+ .
+  var PC : PCell .
+  var BC : BCell .
+  var I : Nat+ .
+  var L : List{Nat+} .
+
+  eq getBit1(scp(B1, I, B2, L)) = B1 .
+  eq getIndex(scp(B1, I, B2, L)) = I .
+  eq getBit2(scp(B1, I, B2, L)) = B2 .
+  eq getList(scp(B1, I, B2, L)) = L .
+  eq getCell1(scp(PC, BC, B1, I, B2, L)) = PC .
+  eq getCell2(scp(PC, BC, B1, I, B2, L)) = BC .
+  eq getBit1(scp(PC, BC, B1, I, B2, L)) = B1 .
+  eq getIndex(scp(PC, BC, B1, I, B2, L)) = I .
+  eq getBit2(scp(PC, BC, B1, I, B2, L)) = B2 .
+  eq getList(scp(PC, BC, B1, I, B2, L)) = L .
+endfm
+
+fmod ABP-STATE is
+  pr NAT+ .
+  pr BOOL+ .
+  pr LIST{Nat+} .
+  pr QUEUE{PCell} .
+  pr QUEUE{BCell} .
+
+  sort ABPState .
+
+  op abp : Queue{PCell} Queue{BCell} Bool+ Nat+ Bool+ List{Nat+} -> ABPState [ctor] .
+  op getQueue1 : ABPState -> Queue{PCell} .
+  op getQueue2 : ABPState -> Queue{BCell} .
+  op getBit1 : ABPState -> Bool+ .
+  op getIndex : ABPState -> Nat+ .
+  op getBit2 : ABPState -> Bool+ .
+  op getList : ABPState -> List{Nat+} .
+
+  vars B1 B2 : Bool+ .
+  var PQ : Queue{PCell} .
+  var BQ : Queue{BCell} .
+  var I : Nat+ .
+  var L : List{Nat+} .
+
+  eq getQueue1(abp(PQ, BQ, B1, I, B2, L)) = PQ .
+  eq getQueue2(abp(PQ, BQ, B1, I, B2, L)) = BQ .
+  eq getBit1(abp(PQ, BQ, B1, I, B2, L)) = B1 .
+  eq getIndex(abp(PQ, BQ, B1, I, B2, L)) = I .
+  eq getBit2(abp(PQ, BQ, B1, I, B2, L)) = B2 .
+  eq getList(abp(PQ, BQ, B1, I, B2, L)) = L .
+endfm
+
+fmod SWP-STATE is
+  pr NAT+ .
+  pr LIST{Nat+} .
+  pr QUEUE{Frame} .
+  pr QUEUE{Ack} .
+
+  sort SWPState .
+  --- queue1, queue2, seq, index, expectedAckSeq, windowCount, list, expectedFrameSeq
+  op swp : Queue{Frame} Queue{Ack} Nat+ Nat+ Nat+ Nat+ List{Nat+} Nat+ -> SWPState [ctor] .
+  op getQueue1 : SWPState -> Queue{Frame} .
+  op getQueue2 : SWPState -> Queue{Ack} .
+  op getSeq : SWPState -> Nat+ .
+  op getIndex : SWPState -> Nat+ .
+  op getExpectedAckSeq : SWPState -> Nat+ .
+  op getWindowCount : SWPState -> Nat+ .
+  op getList : SWPState -> List{Nat+} .
+  op getExpectedFrameSeq : SWPState -> Nat+ .
+
+  vars S I AS C FS : Nat+ .
+  var FQ : Queue{Frame} .
+  var AQ : Queue{Ack} .
+  var L : List{Nat+} .
+
+  eq getQueue1(swp(FQ, AQ, S, I, AS, C, L, FS)) = FQ .
+  eq getQueue2(swp(FQ, AQ, S, I, AS, C, L, FS)) = AQ .
+  eq getSeq(swp(FQ, AQ, S, I, AS, C, L, FS)) = S .
+  eq getIndex(swp(FQ, AQ, S, I, AS, C, L, FS)) = I .
+  eq getExpectedAckSeq(swp(FQ, AQ, S, I, AS, C, L, FS)) = AS .
+  eq getWindowCount(swp(FQ, AQ, S, I, AS, C, L, FS)) = C .
+  eq getList(swp(FQ, AQ, S, I, AS, C, L, FS)) = L .
+  eq getExpectedFrameSeq(swp(FQ, AQ, S, I, AS, C, L, FS)) = FS .
+endfm
+
+fmod INV is
+  pr BCP-STATE .
+  pr BCP2-STATE .
+  pr SCP-STATE .
+  pr ABP-STATE .
+  pr SWP-STATE .
+  pr N-LIST .
+
+  op BCP-inv : BCPState -> Bool .
+  op BCP2-inv : BCP2State -> Bool .
+  op SCP-inv : SCPState -> Bool .
+  op ABP-inv : ABPState -> Bool .
+  op SWP-inv : SWPState -> Bool .
+
+  var BCP : BCPState .
+  var BCP2 : BCP2State .
+  var SCP : SCPState .
+  var ABP : ABPState .
+  var SWP : SWPState .
+
+  eq BCP-inv(BCP) = mk(getIndex(BCP)) = (getIndex(BCP) getList(BCP)) .
+  eq BCP2-inv(BCP2) = (getBit1(BCP2) = getBit2(BCP2) implies mk(getIndex(BCP2)) = (getIndex(BCP2) getList(BCP2))) and 
+                       (getBit1(BCP2) != getBit2(BCP2) implies mk(getIndex(BCP2)) = getList(BCP2)) .
+  eq SCP-inv(SCP) = (getBit1(SCP) = getBit2(SCP) implies mk(getIndex(SCP)) = (getIndex(SCP) getList(SCP))) and 
+                     (getBit1(SCP) != getBit2(SCP) implies mk(getIndex(SCP)) = getList(SCP)) .
+  eq ABP-inv(ABP) = (getBit1(ABP) = getBit2(ABP) implies mk(getIndex(ABP)) = (getIndex(ABP) getList(ABP))) and 
+                     (getBit1(ABP) != getBit2(ABP) implies mk(getIndex(ABP)) = getList(ABP)) .
+  eq SWP-inv(SWP) = subsequence(mk(getIndex(SWP)), getList(SWP)) .
+endfm
+
+fmod CONSTANT is
+  inc NAT+ .
+  inc N-LIST .
+  ex PCELL .
+  ex BCELL .
+  ex QUEUE{PCell} .
+  ex QUEUE{BCell} .
+  ex QUEUE{Frame} .
+  ex QUEUE{Ack} .
+
+  ops i i1 i2 j k seq eASeq wc eFSeq : -> Nat+ .
+  ops list : -> List{Nat+} .
+  ops pcell pcell1 pcell2 : -> PCell .
+  ops bcell bcell1 bcell2 : -> BCell .
+  op pqueue : -> Queue{PCell} .
+  op bqueue : -> Queue{BCell} .
+  op fqueue : -> Queue{Frame} .
+  op aqueue : -> Queue{Ack} .
+
+  op maxIndex : -> Nat+ .
+  op maxQueueLength : -> Nat+ .
+  op windowSize : -> Nat+ .
+  op smallerWindowSize : -> Nat+ .
+  op index : -> Nat+ .
+  op maxQueueLength : -> Nat+ .
+  op $length : Queue{PCell} -> Nat .
+  op $length : Queue{BCell} -> Nat .
+  op $length : Queue{Frame} -> Nat .
+  op $length : Queue{Ack} -> Nat .
+  op $length : List{Nat+} -> Nat .
+  op _>_ : Nat+ Nat+ -> Bool [ditto] .
+  op _<_ : Nat+ Nat+ -> Bool [ditto] .
+  op _<=_ : Nat+ Nat+ -> Bool [ditto] .
+
+  eq maxIndex = 9 .
+  eq index <= 9 = true .
+  eq windowSize = 3 .
+  eq smallerWindowSize < 3 = true .
+  eq maxQueueLength = 5 .
+  eq $length(pqueue, 0) <= 5 = true .
+  eq $length(pqueue, 1) <= 5 = true .
+  eq $length(bqueue, 0) <= 5 = true .
+  eq $length(bqueue, 1) <= 5 = true .
+  eq $length(fqueue, 0) <= 5 = true .
+  eq $length(fqueue, 1) <= 5 = true .
+  eq $length(aqueue, 0) <= 5 = true .
+  eq $length(aqueue, 1) <= 5 = true .
+  eq $length(list, 0) > 0 = true .
+endfm
+
+fmod SIM is
+  pr INT .
+  pr BCP-STATE .
+  pr BCP2-STATE .
+  pr SCP-STATE .
+  pr ABP-STATE .
+  pr SWP-STATE .
+  pr INV .
+  pr CONSTANT .
+
+  op r1 : SWPState ABPState -> Bool .
+  op r2 : ABPState SCPState -> Bool .
+  op r3 : SCPState BCPState -> Bool .
+  op r4 : SCPState BCP2State -> Bool .
+  op r5 : BCP2State BCPState -> Bool .
+  op SWP2ABP-sim : SWPState ABPState -> Bool .
+  op ABP2SCP-sim : ABPState SCPState -> Bool .
+  op SCP2BCP-sim : SCPState BCPState -> Bool .
+  op SCP2BCP2-sim : SCPState BCP2State -> Bool .
+  op BCP22BCP-sim : BCP2State BCPState -> Bool .
+
+  var BCP : BCPState .
+  var BCP2 : BCP2State .
+  var SCP : SCPState .
+  var ABP : ABPState .
+  var SWP : SWPState .
+  var PQ : Queue{PCell} .
+  var BQ : Queue{BCell} .
+
+  eq r1(SWP, ABP) = (getIndex(SWP) >= getIndex(ABP)) and (getList(SWP) = getList(ABP)) .
+  eq r2(ABP, SCP) = (getBit1(ABP) = getBit1(SCP)) and (getBit2(ABP) = getBit2(SCP)) and 
+                    (getIndex(ABP) = getIndex(SCP)) and (getList(ABP) = getList(SCP)) .
+  ceq r3(SCP, BCP) = (getIndex(SCP) = getIndex(BCP)) and (getList(SCP) = getList(BCP)) if (getBit1(SCP) = getBit2(SCP)) .
+  ceq r3(SCP, BCP) = (s(getIndex(SCP)) = getIndex(BCP)) and (getList(SCP) = getList(BCP)) if (getBit1(SCP) != getBit2(SCP)) .
+  eq r4(SCP, BCP2) = (getBit1(SCP) = getBit1(BCP2)) and (getBit2(SCP) = getBit2(BCP2)) and 
+                     (getIndex(SCP) = getIndex(BCP2)) and (getList(SCP) = getList(BCP2)) .
+  ceq r5(BCP2, BCP) = (getIndex(BCP2) = getIndex(BCP)) and (getList(BCP2) = getList(BCP)) if (getBit1(BCP2) = getBit2(BCP2)) .
+  ceq r5(BCP2, BCP) = (s(getIndex(BCP2)) = getIndex(BCP)) and (getList(BCP2) = getList(BCP)) if (getBit1(BCP2) != getBit2(BCP2)) .
+  eq SWP2ABP-sim(SWP, ABP) = r1(SWP, ABP) implies (ABP-inv(ABP) implies SWP-inv(SWP)) .
+  eq ABP2SCP-sim(ABP, SCP) = r2(ABP, SCP) implies (SCP-inv(SCP) implies ABP-inv(ABP)) .
+  eq SCP2BCP-sim(SCP, BCP) = r3(SCP, BCP) implies (BCP-inv(BCP) implies SCP-inv(SCP)) .
+  eq SCP2BCP2-sim(SCP, BCP2) = r4(SCP, BCP2) implies (BCP2-inv(BCP2) implies SCP-inv(SCP)) .
+  eq BCP22BCP-sim(BCP2, BCP) = r5(BCP2, BCP) implies (BCP-inv(BCP) implies BCP2-inv(BCP2)) .
+endfm
+
+fmod SWP-FUNC is
+  pr NAT+ .
+  pr INT .
+  pr SWP-STATE .
+  pr CONSTANT .
+
+  op next : Nat+ -> Nat+ .
+  op prev : Nat+ -> Nat+ .
+  op between : Nat+ Nat+ Nat+ -> Bool . --- expectedAckSeq, receivedAckSeq, nextSendSeq
+  op expectedAckSeq : Nat+ Nat+ Nat+ -> Nat+ . --- expectedAckSeq, receivedAckSeq, nextSendSeq
+  op windowCount : Nat+ Nat+ Nat+ Nat+ -> Nat+ . --- windowCount, expectedAckSeq, receivedAckSeq, nextSendSeq
+
+  vars N N1 N2 N3 N4 : Nat+ .
+ 
+  eq next(N) = (N + 1) rem windowSize . --- return value: 0 <= N < windowSize
+  eq prev(N) = (N + sd(windowSize, 1)) rem windowSize . --- return value: 0 <= N < windowSize
+  eq between(N1, N2, N3) = ((N1 <= N2) and (N2 < N3)) or ((N3 < N1) and (N1 <= N2)) or ((N2 < N3) and (N3 < N1)) .
+  ceq expectedAckSeq(N1, N2, N3) = expectedAckSeq(next(N1), N2, N3) if between(N1, N2, N3) .
+  ceq expectedAckSeq(N1, N2, N3) = N1 if not between(N1, N2, N3) .
+  ceq windowCount(N1, N2, N3, N4) = windowCount(sd(N1, 1), next(N2), N3, N4) if between(N2, N3, N4) .
+  ceq windowCount(N1, N2, N3, N4) = N1 if not between(N2, N3, N4) .
+endfm
+
+fmod BCP-OCOM is
+  pr NAT+ .
+  pr LIST{Nat+} .
+
+  sort BCPOCom .
+
+  op index:_ : Nat+ -> BCPOCom [ctor] .
+  op list:_ : List{Nat+} -> BCPOCom [ctor] .
+endfm
+
+view BCPOCom from TRIV to BCP-OCOM is
+  sort Elt to BCPOCom .
+endv
+
+fmod BCP-CONFIG is
+  pr SOUP{BCPOCom} .
+  pr BCP-STATE .
+  pr CONSTANT .
+
+  sort BCPConfig .
+
+  op {_} : Soup{BCPOCom} -> BCPConfig [ctor] .
+  op init : -> BCPConfig .
+  op state : BCPConfig -> BCPState .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+
+  eq init = {(index: 0) (list: nil)} .
+  eq state({(index: I) (list: L)}) = bcp(I, L) .
+endfm
+
+--- Bare communication protocol
+mod BCP is
+  pr N-LIST .
+  pr BCP-CONFIG .
+  pr SWP-FUNC .
+  pr SIM .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  var OCs : Soup{BCPOCom} .
+
+  crl [send] : {(index: I) (list: L) OCs} => {(index: s(I)) (list: (I L)) OCs}
+               if I <= maxIndex .
+endm
+
+fmod SCP-OCOM is
+  pr NAT+ .
+  pr LIST{Nat+} .
+  pr PCELL .
+  pr BCELL .
+  pr BOOL+ .
+
+  sort SCPOCom .
+
+  op cell1:_ : PCell -> SCPOCom [ctor] .
+  op cell2:_ : BCell -> SCPOCom [ctor] .
+  op bit1:_ : Bool+ -> SCPOCom [ctor] .
+  op index:_ : Nat+ -> SCPOCom [ctor] .
+  op bit2:_ : Bool+ -> SCPOCom [ctor] .
+  op list:_ : List{Nat+} -> SCPOCom [ctor] .
+endfm
+
+view SCPOCom from TRIV to SCP-OCOM is
+  sort Elt to SCPOCom .
+endv
+
+fmod SCP-CONFIG is
+  pr SOUP{SCPOCom} .
+  pr SCP-STATE .
+  pr CONSTANT .
+
+  sort SCPConfig .
+
+  op {_} : Soup{SCPOCom} -> SCPConfig [ctor] .
+  op init : -> SCPConfig .
+  op state : SCPConfig -> SCPState .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B1 B2 : Bool+ .
+  var PC : PCell .
+  var BC : BCell .
+
+  eq init = {(cell1: empty) (cell2: empty) (bit1: false) (index: 0) (bit2: false) (list: nil)} .
+  eq state({(cell1: PC) (cell2: BC) (bit1: B1) (index: I) (bit2: B2) (list: L)}) = scp(PC, BC, B1, I, B2, L).
+endfm
+
+--- Simple communication protocol
+mod SCP is
+  pr N-LIST .
+  pr SCP-CONFIG .
+  pr SIM .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B B1 B2 : Bool+ .
+  var PC : PCell .
+  var BC : BCell .
+  var OCs : Soup{SCPOCom} .
+
+  crl [send1] : {(cell1: PC) (bit1: B) (index: I) OCs} => 
+                {(cell1: pcell(B, I)) (bit1: B) (index: I) OCs}
+                if I <= maxIndex .
+  crl [rec1] : {(cell2: BC) (bit1: B) (index: I) OCs} => 
+               {(cell2: empty) (bit1: (if bit(BC) = B then B else not B fi)) 
+                (index: (if bit(BC) = B then I else s(I) fi)) OCs}
+               if BC != empty .
+  rl [send2] : {(cell2: BC) (bit2: B) OCs} => 
+               {(cell2: bcell(B)) (bit2: B) OCs} .
+  crl [rec2] : {(cell1: PC) (bit2: B) (list: L) OCs} => 
+               {(cell1: empty) (bit2: (if bit(PC) = B then not B else B fi)) 
+                (list: (if bit(PC) = B then (index(PC) L) else L fi)) OCs}
+               if PC != empty .
+  crl [drop1] : {(cell1: PC) OCs} => 
+                {(cell1: empty) OCs}
+                if PC != empty .
+  crl [drop2] : {(cell2: BC) OCs} => 
+                {(cell2: empty) OCs}
+                if BC != empty .
+endm
+
+fmod ABP-OCOM is
+  pr NAT+ .
+  pr LIST{Nat+} .
+  pr ABP-STATE .
+  pr BOOL+ .
+
+  sort ABPOCom .
+
+  op queue1:_ : Queue{PCell} -> ABPOCom [ctor] .
+  op queue2:_ : Queue{BCell} -> ABPOCom [ctor] .
+  op bit1:_ : Bool+ -> ABPOCom [ctor] .
+  op index:_ : Nat+ -> ABPOCom [ctor] .
+  op bit2:_ : Bool+ -> ABPOCom [ctor] .
+  op list:_ : List{Nat+} -> ABPOCom [ctor] .
+endfm
+
+view ABPOCom from TRIV to ABP-OCOM is
+  sort Elt to ABPOCom .
+endv
+
+fmod ABP-CONFIG is
+  pr SOUP{ABPOCom} .
+  pr CONSTANT .
+
+  sort ABPConfig .
+
+  op {_} : Soup{ABPOCom} -> ABPConfig [ctor] .
+  op init : -> ABPConfig .
+  op state : ABPConfig -> ABPState .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B1 B2 : Bool+ .
+  var PC : PCell .
+  var BC : BCell .
+  var PQ : Queue{PCell} .
+  var BQ : Queue{BCell} .
+
+  eq init = {(queue1: nil) (queue2: nil) (bit1: false) (index: 0) (bit2: false) (list: nil)} .
+  eq state({(queue1: PQ) (queue2: BQ) (bit1: B1) (index: I) (bit2: B2) (list: L)}) = abp(PQ, BQ, B1, I, B2, L).
+endfm
+
+--- Alternating bit protocol
+mod ABP is
+  pr N-LIST .
+  pr ABP-CONFIG .
+  pr SWP-FUNC .
+  pr SIM .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B B1 B2 : Bool+ .
+  var PQ : Queue{PCell} .
+  var BQ : Queue{BCell} .
+  var PC : PCell .
+  var BC : BCell .
+  var OCs : Soup{ABPOCom} .
+
+  crl [send1] : {(queue1: PQ) (bit1: B) (index: I) OCs} => 
+                {(queue1: (PQ pcell(B, I))) (bit1: B) (index: I) OCs}
+                if I <= maxIndex /\ length(PQ) <= maxQueueLength .
+  rl [rec1] : {(queue2: (BC BQ)) (bit1: B) (index: I) OCs} => 
+              {(queue2: BQ) (bit1: (if bit(BC) = B then B else not B fi)) 
+               (index: (if bit(BC) = B then I else s(I) fi)) OCs} .
+  crl [send2] : {(queue2: BQ) (bit2: B) OCs} => 
+                {(queue2: (BQ bcell(B))) (bit2: B) OCs}
+                if length(BQ) <= maxQueueLength .
+  rl [rec2] : {(queue1: (PC PQ)) (bit2: B) (list: L) OCs} => 
+              {(queue1: PQ) (bit2: (if bit(PC) = B then not B else B fi)) 
+               (list: (if bit(PC) = B then (index(PC) L) else L fi)) OCs} .
+  rl [drop1] : {(queue1: (PC PQ)) OCs} => 
+               {(queue1: PQ) OCs} .
+  crl [dup1] : {(queue1: (PC PQ)) OCs} => 
+               {(queue1: (PC PC PQ)) OCs}
+               if length(PQ) <= maxQueueLength .
+  rl [drop2] : {(queue2: (BC BQ)) OCs} => 
+               {(queue2: BQ) OCs} .
+  crl [dup2] : {(queue2: (BC BQ)) OCs} => 
+               {(queue2: (BC BC BQ)) OCs}
+               if length(BQ) <= maxQueueLength .
+endm
+
+fmod BCP2-OCOM is
+  pr NAT+ .
+  pr LIST{Nat+} .
+  pr BOOL+ .
+
+  sort BCP2OCom .
+
+  op index:_ : Nat+ -> BCP2OCom [ctor] .
+  op list:_ : List{Nat+} -> BCP2OCom [ctor] .
+  op bit1:_ : Bool+ -> BCP2OCom [ctor] .
+  op bit2:_ : Bool+ -> BCP2OCom [ctor] .
+endfm
+
+view BCP2OCom from TRIV to BCP2-OCOM is
+  sort Elt to BCP2OCom .
+endv
+
+fmod BCP2-CONFIG is
+  pr SOUP{BCP2OCom} .
+  pr BCP2-STATE .
+  pr CONSTANT .
+
+  sort BCP2Config .
+
+  op {_} : Soup{BCP2OCom} -> BCP2Config [ctor] .
+  op init : -> BCP2Config .
+  op state : BCP2Config -> BCP2State .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B1 B2 : Bool+ .
+
+  eq init = {(bit1: false) (index: 0) (bit2: false) (list: nil)} .
+  eq state({(bit1: B1) (index: I) (bit2: B2) (list: L)}) = bcp2(B1, I, B2, L) .
+endfm
+
+mod BCP2 is
+  pr N-LIST .
+  pr BCP2-CONFIG .
+  pr SIM .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B B1 B2 : Bool+ .
+  var OCs : Soup{BCP2OCom} .
+
+  crl [send1] : {(bit1: B1) (index: I) (bit2: B2) (list: L) OCs} =>
+                {(bit1: (not B1)) (index: s(I)) (bit2: B2) (list: L) OCs}
+                if I <= maxIndex /\ (B1 != B2) .
+  crl [send2] : {(bit1: B1) (index: I) (bit2: B2) (list: L) OCs} =>
+                {(bit1: B1) (index: I) (bit2: (not B2)) (list: (I L)) OCs}
+                if (B1 = B2) .
+endm
+
+fmod SWP-OCOM is
+  pr NAT+ .
+  pr LIST{Nat+} .
+  pr SWP-STATE .
+
+  sort SWPOCom .
+
+  op queue1:_ : Queue{Frame} -> SWPOCom [ctor] .
+  op queue2:_ : Queue{Ack} -> SWPOCom [ctor] .
+  op seq:_ : Nat+ -> SWPOCom [ctor] .
+  op index:_ : Nat+ -> SWPOCom [ctor] .
+  op expectedAckSeq:_ : Nat+ -> SWPOCom [ctor] .
+  op windowCount:_ : Nat+ -> SWPOCom [ctor] .
+  op list:_ : List{Nat+} -> SWPOCom [ctor] .
+  op expectedFrameSeq:_ : Nat+ -> SWPOCom [ctor] .
+endfm
+
+view SWPOCom from TRIV to SWP-OCOM is
+  sort Elt to SWPOCom .
+endv
+
+fmod SWP-CONFIG is
+  pr NAT+ .
+  pr SOUP{SWPOCom} .
+  pr CONSTANT .
+
+  sort SWPConfig .
+
+  op {_} : Soup{SWPOCom} -> SWPConfig [ctor] .
+  op init : -> SWPConfig .
+  op state : SWPConfig -> SWPState .
+
+  vars S I AS C FS : Nat+ .
+  var FQ : Queue{Frame} .
+  var AQ : Queue{Ack} .
+  var L : List{Nat+} .
+
+  eq init = {(queue1: nil) (queue2: nil) (seq: 0) (index: 0) (expectedAckSeq: 0) (windowCount: 0) (list: nil) (expectedFrameSeq: 0)} .
+  eq state({(queue1: FQ) (queue2: AQ) (seq: S) (index: I) (expectedAckSeq: AS) (windowCount: C) (list: L) (expectedFrameSeq: FS)}) = swp(FQ, AQ, S, I, AS, C, L, FS).
+endfm
+
+mod SWP is
+  pr N-LIST .
+  pr SWP-CONFIG .
+  pr SWP-FUNC .
+  pr SIM .
+
+  vars A F C I S N : Nat+ .
+  var L : List{Nat+} .
+  var FQ : Queue{Frame} .
+  var AQ : Queue{Ack} .
+  var FR : Frame .
+  var AC : Ack .
+  var OCs : Soup{SWPOCom} .
+
+  crl [send1] : {(queue1: FQ) (seq: S) (index: I) (windowCount: C) OCs} => 
+                {(queue1: (FQ frame(S, I))) (seq: next(S)) (index: s(I)) (windowCount: s(C)) OCs}
+                if C < windowSize /\ I <= maxIndex /\ length(FQ) <= maxQueueLength .
+  rl [rec1] : {(queue2: (AC AQ)) (expectedAckSeq: A) (seq: S) (windowCount: C) OCs} => 
+              {(queue2: AQ) (expectedAckSeq: expectedAckSeq(A, seq(AC), S)) 
+               (seq: S) (windowCount: windowCount(C, A, seq(AC), S)) OCs} .
+  crl [send2] : {(queue2: AQ) (expectedFrameSeq: S) (list: L) OCs} => 
+                {(queue2: (AQ ack(prev(S)))) (expectedFrameSeq: S) (list: L) OCs}
+                if length(L) > 0 /\ length(AQ) <= maxQueueLength .
+  rl [rec2] : {(queue1: (FR FQ)) (expectedFrameSeq: S) (list: L) OCs} => 
+              {(queue1: FQ) (expectedFrameSeq: (if seq(FR) = S then next(S) else S fi)) 
+               (list: (if seq(FR) = S then (index(FR) L) else L fi)) OCs} .
+  rl [drop1] : {(queue1: (FR FQ)) OCs} => 
+               {(queue1: FQ) OCs} .
+  crl [dup1] : {(queue1: (FR FQ)) OCs} => 
+               {(queue1: (FR FR FQ)) OCs}
+               if length(FQ) <= maxQueueLength .
+  rl [drop2] : {(queue2: (AC AQ)) OCs} => 
+               {(queue2: AQ) OCs} .
+  crl [dup2] : {(queue2: (AC AQ)) OCs} => 
+               {(queue2: (AC AC AQ)) OCs}
+               if length(AQ) <= maxQueueLength .
+endm

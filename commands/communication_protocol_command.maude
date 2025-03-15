@@ -1,0 +1,239 @@
+load ./../specs/communication_protocol.maude
+load ./../simulation_checker.maude
+
+----------------------------------------------------
+--- Verification that the BCP simulates the BCP2 ---
+----------------------------------------------------
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r5" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: (not bool)) (list: list)}" > 
+           < "BCP"  | "{(index: s(index)) (list: list)}" >
+           "send1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r5" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP"  | "{(index: index) (list: list)}" >
+           "send2" > .
+
+----------------------------------------------------
+--- Verification that the BCP2 simulates the SCP ---
+----------------------------------------------------
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "send1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell) (cell2: bcell(bool)) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "rec1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell) (cell2: bcell(bool)) (bit1: (not bool)) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP2" | "{(bit1: (not bool)) (index: index) (bit2: bool) (list: list)}" >
+           "rec1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "send2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell(bool, index)) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "rec2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell(bool, index)) (cell2: bcell) (bit1: bool) (index: index) (bit2: (not bool)) (list: list)}" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: (not bool)) (list: list)}" >
+           "rec2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell(bool, index)) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "drop1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM"  | "r4" > 
+           < "SCP"  | "{(cell1: pcell) (cell2: bcell(bool)) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "BCP2" | "{(bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "drop2" > .
+
+---------------------------------------------------
+--- Verification that the SCP simulates the ABP ---
+---------------------------------------------------
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "send1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: (bcell(bool) bqueue)) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "rec1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: (bcell(bool) bqueue)) (bit1: (not bool)) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: (not bool)) (index: index) (bit2: bool) (list: list)}" >
+           "rec1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "send2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: (pcell(bool, index) pqueue)) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell(bool, index)) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "rec2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: (pcell(bool, index) pqueue)) (queue2: bqueue) (bit1: bool) (index: index) (bit2: (not bool)) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell(bool, index)) (cell2: bcell) (bit1: bool) (index: index) (bit2: (not bool)) (list: list)}" >
+           "rec2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: (pcell(bool, index) pqueue)) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "drop1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: (pcell(bool, index) pqueue)) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "dup1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: (bcell(bool) bqueue)) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "drop2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r2" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: (bcell(bool) bqueue)) (bit1: bool) (index: index) (bit2: bool) (list: list)}" > 
+           < "SCP" | "{(cell1: pcell) (cell2: bcell) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "dup2" > .
+
+----------------------------------------------------
+--- Verification that the ABP simulates the SWP　---
+----------------------------------------------------
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r1" > 
+           < "SWP" | "{(queue1: fqueue) (queue2: aqueue) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: smallerWindowSize) (list: list) (expectedFrameSeq: eFSeq)}" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "send1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r1" > 
+           < "SWP" | "{(queue1: fqueue) (queue2: (ack(j) aqueue)) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: eFSeq)}" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "rec1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r1" > 
+           < "SWP" | "{(queue1: fqueue) (queue2: aqueue) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: eFSeq)}" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "send2" > .
+
+mod SWP_REC2_01 is
+  pr SIM .
+  pr SWP .
+
+  ops seq1 seq2 : -> Nat+ .
+
+  eq (seq1 =Nat+ seq2) = true .
+endm
+
+mod SWP_REC2_ABP_01 is
+  pr SIM .
+  pr ABP .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B1 B2 : Bool+ .
+  var PQ : Queue{PCell} .
+  var BQ : Queue{BCell} .
+  var PC : PCell .
+  var OCs : Soup{ABPOCom} .
+
+  ops seq1 seq2 : -> Nat+ .
+
+  eq (seq1 =Nat+ seq2) = true .
+endm
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SWP_REC2_01" | "r1" > 
+           < "SWP_REC2_01" | "{(queue1: (frame(seq1, index) fqueue)) (queue2: aqueue) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: seq2)}" > 
+           < "SWP_REC2_ABP_01" | "{(queue1: (pcell(bool, index) pqueue)) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "rec2" > .
+
+mod SWP_REC2_02 is
+  pr SIM .
+  pr SWP .
+
+  ops seq1 seq2 : -> Nat+ .
+
+  eq (seq1 =Nat+ seq2) = false .
+endm
+
+mod SWP_REC2_ABP_02 is
+  pr SIM .
+  pr ABP .
+
+  var I : Nat+ .
+  var L : List{Nat+} .
+  vars B1 B2 : Bool+ .
+  var PQ : Queue{PCell} .
+  var BQ : Queue{BCell} .
+  var OCs : Soup{ABPOCom} .
+
+  ops seq1 seq2 : -> Nat+ .
+
+  eq (seq1 =Nat+ seq2) = false .
+endm
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SWP_REC2_02" | "r1" > 
+           < "SWP_REC2_02" | "{(queue1: (frame(seq1, index) fqueue)) (queue2: aqueue) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: seq2)}" > 
+           < "SWP_REC2_ABP_02" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "rec2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r1" > 
+           < "SWP" | "{(queue1: (frame(j, index) fqueue)) (queue2: aqueue) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: eFSeq)}" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "drop1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r1" > 
+           < "SWP" | "{(queue1: (frame(j, index) fqueue)) (queue2: aqueue) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: eFSeq)}" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "dup1" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r1" > 
+           < "SWP" | "{(queue1: fqueue) (queue2: (ack(j) aqueue)) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: eFSeq)}" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "drop2" > .
+
+red in SIMULATION-CHECKER-IO : 
+  simulate<< "SIM" | "r1" > 
+           < "SWP" | "{(queue1: fqueue) (queue2: (ack(j) aqueue)) (seq: seq) (index: index) (expectedAckSeq: eASeq) (windowCount: wc) (list: list) (expectedFrameSeq: eFSeq)}" > 
+           < "ABP" | "{(queue1: pqueue) (queue2: bqueue) (bit1: bool) (index: index) (bit2: bool) (list: list)}" >
+           "drop2" > .
