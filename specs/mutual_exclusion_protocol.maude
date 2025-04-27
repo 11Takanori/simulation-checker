@@ -1,0 +1,282 @@
+fmod SOUP {D :: TRIV} is
+  sort Soup{D} .
+  subsort D$Elt < Soup{D} .
+  op empty : -> Soup{D} [ctor] .
+  op _ _ : Soup{D} Soup{D} -> Soup{D} [ctor assoc comm id: empty] .
+endfm
+
+fmod QUEUE {D :: TRIV} is
+  sort Queue{D} .
+  subsort D$Elt < Queue{D} .
+  op empq : -> Queue{D} [ctor] .
+  op _|_ : Queue{D} Queue{D} -> Queue{D} [ctor assoc id: empq] .
+  op top : Queue{D} -> D$Elt .
+  op deq : Queue{D} -> D$Elt .
+  var Q : Queue{D} .
+  var E : D$Elt .
+  eq top(empq) = empq .
+  eq top(E | Q) = E .
+  eq deq(empq) = empq .
+  eq deq(E | Q) = Q .
+endfm
+
+fmod TRUTH-VALUE+ is
+  pr TRUTH-VALUE .
+  sort Bool+ . --- Bool+ is used to express (arbitrary) boolean value.
+  subsort Bool < Bool+ .
+  ops bool : -> Bool+ .
+endfm
+
+fmod BOOL-OPS+ is
+  pr TRUTH-VALUE+ .
+  op _=_ : Bool+ Bool+ -> Bool [comm] .
+  op _!=_ : Bool+ Bool+ -> Bool [comm] .
+  op not_ : Bool+ -> Bool+ [ditto] .
+  op _iff_ : Bool+ Bool+ -> Bool+ [comm] .
+  vars B+ B1+ B2+ : Bool+ .
+  vars B1 B2 : Bool .
+  eq (B+ = B+) = true .
+  eq ((not B+) = B+) = false .
+  eq (true = false) = false .
+  eq (B1+ != B2+) = not (B1+ = B2+) .
+  eq not (not B+) = B+ .
+  eq B1 iff B2 = (B1 implies B2) and (B1 implies B2) .
+endfm
+
+fmod BOOL+ is
+  pr BOOL-OPS+ .
+endfm
+
+fmod PID is
+  sort Pid .
+  ops i j : -> Pid [ctor] .
+  op _=_ : Pid Pid -> Bool [comm] .
+  var P : Pid .
+  eq (P = P) = true .
+  eq (i = j) = false .
+endfm
+
+fmod LOC is
+  sort Loc .
+  ops rs ws cs none : -> Loc [ctor] .
+  op _=_ : Loc Loc -> Bool [comm] .
+  var L : Loc .
+  eq (L = L) = true .
+  eq (rs = ws) = false .
+  eq (rs = cs) = false .
+  eq (ws = cs) = false .
+endfm
+
+fmod LOC-BY-PID is
+  pr PID .
+  pr LOC .
+  sort LocByPid .
+  op locByPid : Loc Pid -> LocByPid .
+  op _=_ : LocByPid LocByPid -> Bool [comm] .
+  op getLoc : LocByPid -> Loc .
+  op getPid : LocByPid -> Pid .
+  vars L L1 L2 : Loc .
+  vars P P1 P2 : Pid .
+  eq (locByPid(L1, P1) = locByPid(L2, P2)) = L1 = L2 and P1 = P2 .
+  eq getLoc(locByPid(L, P)) = L .
+  eq getPid(locByPid(L, P)) = P .
+endfm
+
+view Pid from TRIV to PID is
+  sort Elt to Pid .
+endv
+
+view Loc from TRIV to LOC is
+  sort Elt to Loc .
+endv
+
+view LocByPid from TRIV to LOC-BY-PID is
+  sort Elt to LocByPid .
+endv
+
+fmod LOC-BY-PIDs is
+  pr SOUP{LocByPid} .
+  pr NAT .
+  op equals : Soup{LocByPid} Soup{LocByPid} -> Bool [comm] .
+  op getLocByPid : Soup{LocByPid} Pid -> Loc .
+  op count : Soup{LocByPid} Loc -> Nat .
+  op $count : Soup{LocByPid} Loc Nat -> Nat .
+  var X X1 X2  : LocByPid .
+  vars S S1 S2 : Soup{LocByPid} .
+  var P : Pid .
+  var L : Loc .
+  var N : Nat .
+  eq equals(empty, empty) = true .
+  eq equals(empty, (X S)) = false .
+  eq equals((X1 S1), (X2 S2)) = if ((X1 = X2)) then equals(S1, S2) else false fi .
+  eq getLocByPid(empty, P) = none .
+  eq getLocByPid((X S), P) = if (getPid(X) = P) then getLoc(X) else getLocByPid(S, P) fi .
+  eq count(S, L) = $count(S, L, 0) .
+  eq $count(empty, L, N) = N .
+  eq $count((X S), L, N) = if (getLoc(X) = L) then $count(S, L, N + 1) else $count(S, L, N) fi .
+endfm
+
+fmod TAS-STATE is
+  pr LOC-BY-PIDs .
+  pr BOOL+ .
+  sort TASState .
+  op tas : Soup{LocByPid} Bool+  -> TASState [ctor] .
+  op getLocByPids : TASState -> Soup{LocByPid} .
+  op getLocked : TASState -> Bool+ .
+  var S : Soup{LocByPid} .
+  var B : Bool+ .
+  eq getLocByPids(tas(S, B)) = S .
+  eq getLocked(tas(S, B)) = B .
+endfm
+
+fmod QLOCK-STATE is
+  pr LOC-BY-PIDs .
+  pr QUEUE{Pid} .
+  sort QlockState .
+  op qlock : Soup{LocByPid} Queue{Pid} -> QlockState [ctor] .
+  op getLocByPids : QlockState -> Soup{LocByPid} .
+  op getQueue : QlockState -> Queue{Pid} .
+  var S : Soup{LocByPid} .
+  var Q : Queue{Pid} .
+  eq getLocByPids(qlock(S, Q)) = S .
+  eq getQueue(qlock(S, Q)) = Q .
+endfm
+
+fmod INV is
+  pr TAS-STATE .
+  pr QLOCK-STATE .
+  op TAS-inv : TASState -> Bool .
+  op Qlock-inv : QlockState -> Bool .
+  var QS : QlockState .
+  var TS : TASState .
+  eq Qlock-inv(QS) = count(getLocByPids(QS), cs) <= 1 .
+  eq TAS-inv(TS) = count(getLocByPids(TS), cs) <= 1 .
+endfm
+
+fmod CONSTANT is
+  pr PID .
+  pr QUEUE{Pid} .
+  pr LOC .
+  pr BOOL+ .
+  ops q : -> Queue{Pid} .
+  ops l : -> Loc .
+  ops b : -> Bool+ .
+endfm
+
+fmod SIM is
+  pr TAS-STATE .
+  pr QLOCK-STATE .
+  pr INV .
+  pr CONSTANT .
+  op r : QlockState TASState -> Bool .
+  op sim : QlockState TASState -> Bool .
+  var QS : QlockState .
+  var TS : TASState .
+  vars P1 P2 : Pid .
+  vars L1 L2 : Loc .
+  var B : Bool+ .
+  var Q : Queue{Pid} .
+
+  eq r(QS, TS) = equals(getLocByPids(QS), getLocByPids(TS)) and 
+    ((getLocByPid(getLocByPids(QS), top(getQueue(QS))) = cs) iff (getLocked(TS) = true)) .
+  eq sim(QS, TS) = r(QS, TS) implies (TAS-inv(TS) implies Qlock-inv(QS)) .
+endfm
+
+fmod TAS-OCOMP is
+  pr PID .
+  pr LOC .
+  pr BOOL+ .
+  sort TASOComp .
+  op (pc[_]:_) :  Pid Loc -> TASOComp [ctor] .
+  op (locked:_) : Bool+ -> TASOComp [ctor] .
+endfm
+
+view TASOComp from TRIV to TAS-OCOMP is
+  sort Elt to TASOComp .
+endv
+
+fmod TAS-CONFIG is
+  pr SOUP{TASOComp} .
+  pr TAS-STATE .
+  pr CONSTANT .
+  sort TASConfig .
+  op {_} : Soup{TASOComp} -> TASConfig [ctor] .
+  op state : TASConfig -> TASState .
+  op init : -> TASConfig .
+  var B : Bool+ .
+  vars P1 P2 : Pid .
+  vars L1 L2 : Loc .
+  var OCs : Soup{TASOComp} .
+  eq state({(pc[P1]: L1) (pc[P2]: L2) (locked: B) OCs}) = tas((locByPid(L1, P1) locByPid(L2, P2)), B) .
+  eq init = {(locked: false) (pc[i]: rs) (pc[j]: rs)} .
+endfm
+
+mod TAS is
+  pr SIM .
+  inc TAS-CONFIG .
+  var B : Bool+ .
+  vars P P1 P2 I J : Pid .
+  vars L1 L2 : Loc .
+  var OCs : Soup{TASOComp} .
+  rl [start] : {(pc[P]: rs) OCs} => {(pc[P]: ws) OCs} .
+  crl [wait] : {(pc[P]: ws) (locked: B) OCs} => {(pc[P]: cs) (locked: true) OCs} if B == false .
+  rl [exit] : {(pc[P]: cs) (locked: B) OCs} => {(pc[P]: rs) (locked: false) OCs} .
+endm
+
+search [1] in TAS : init =>* {OCs} such that not TAS-inv(state({OCs})) .
+
+fmod QLOCK-OCOMP is
+  pr LOC .
+  pr QUEUE{Pid} .
+  sort QlockOComp .
+  op (pc[_]:_) : Pid Loc -> QlockOComp [ctor] .
+  op (queue:_) : Queue{Pid} -> QlockOComp [ctor] .
+endfm
+
+view QlockOComp from TRIV to QLOCK-OCOMP is
+  sort Elt to QlockOComp .
+endv
+
+fmod QLOCK-CONFIG is
+  pr SOUP{QlockOComp} .
+  pr QLOCK-STATE .
+  pr CONSTANT .
+  sort QlockConfig .
+  op {_} : Soup{QlockOComp} -> QlockConfig [ctor] .
+  op state : QlockConfig -> QlockState .
+  op init : -> QlockConfig .
+  var Q : Queue{Pid} .
+  vars P1 P2 : Pid .
+  vars L1 L2 : Loc .
+  var OCs : Soup{QlockOComp} .
+  eq state({(pc[P1]: L1) (pc[P2]: L2) (queue: Q) OCs}) = qlock((locByPid(L1, P1) locByPid(L2, P2)), Q) .
+  eq init = {(queue: empq) (pc[i]: rs) (pc[j]: rs)} .
+endfm
+
+mod QLOCK is
+  pr SIM .
+  inc QLOCK-CONFIG .
+  var Q : Queue{Pid} .
+  vars P P1 P2 : Pid .
+  var OCs : Soup{QlockOComp} .
+  rl [start] : {(pc[P]: rs) (queue: Q) OCs} => {(pc[P]: ws) (queue: (Q | P)) OCs} .
+  rl [wait] : {(pc[P]: ws) (queue: (P | Q)) OCs} => {(pc[P]: cs) (queue: (P | Q)) OCs} .
+  rl [exit] : {(pc[P]: cs) (queue: (P | Q)) OCs} => {(pc[P]: rs) (queue: Q) OCs} .
+endm
+
+search [1] in QLOCK : init =>* {OCs} such that not Qlock-inv(state({OCs})) .
+
+--- start
+srew in QLOCK : {(pc[i]: rs) (pc[j]: l) (queue: q)} using start .
+red in SIM : r(qlock((locByPid(rs, i) locByPid(l, j)), q), tas((locByPid(rs, i) locByPid(l, j)), false)) .
+search[1] in TAS : {(pc[i]: rs) (pc[j]: l) (locked: false)} =>* {OCs} such that r(qlock((locByPid(ws, i) locByPid(l, j)), (q | i)), state({OCs})) .
+
+--- wait
+srew in QLOCK : {(pc[i]: ws) (pc[j]: l) (queue: (i | q))} using wait .
+red in SIM : r(qlock((locByPid(ws, i) locByPid(l, j)), (i | q)), tas((locByPid(ws, i) locByPid(l, j)), false)) .
+search[1] in TAS : {(pc[i]: ws) (pc[j]: l) (locked: false)} =>* {OCs} such that r(qlock((locByPid(cs, i) locByPid(l, j)), (i | q)), state({OCs})) .
+
+--- exit
+srew in QLOCK : {(pc[i]: cs) (pc[j]: l) (queue: (i | q))} using exit .
+red in SIM : r(qlock((locByPid(cs, i) locByPid(l, j)), (i | q)), tas((locByPid(cs, i) locByPid(l, j)), true)) .
+search[1] in TAS : {(pc[i]: cs) (pc[j]: l) (locked: true)} =>* {OCs} such that r(qlock((locByPid(rs, i) locByPid(l, j)), q), state({OCs})) .
