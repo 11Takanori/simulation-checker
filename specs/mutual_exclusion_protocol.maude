@@ -11,35 +11,27 @@ fmod QUEUE {D :: TRIV} is
   op empq : -> Queue{D} [ctor] .
   op _|_ : Queue{D} Queue{D} -> Queue{D} [ctor assoc id: empq] .
   op top : Queue{D} -> D$Elt .
-  op deq : Queue{D} -> D$Elt .
+  op isEmpty : Queue{D} -> Bool .
   var Q : Queue{D} .
   var E : D$Elt .
   eq top(empq) = empq .
   eq top(E | Q) = E .
-  eq deq(empq) = empq .
-  eq deq(E | Q) = Q .
-endfm
-
-fmod TRUTH-VALUE+ is
-  pr TRUTH-VALUE .
-  sort Bool+ . --- Bool+ is used to express (arbitrary) boolean value.
-  subsort Bool < Bool+ .
-  ops bool : -> Bool+ .
+  eq isEmpty(empq) = true .
+  eq isEmpty(E | Q) = false .
+  eq isEmpty(Q | E) = false .
 endfm
 
 fmod BOOL-OPS+ is
-  pr TRUTH-VALUE+ .
-  op _=_ : Bool+ Bool+ -> Bool [comm] .
-  op _!=_ : Bool+ Bool+ -> Bool [comm] .
-  op not_ : Bool+ -> Bool+ [ditto] .
-  op _iff_ : Bool+ Bool+ -> Bool+ [comm] .
-  vars B+ B1+ B2+ : Bool+ .
-  vars B1 B2 : Bool .
-  eq (B+ = B+) = true .
-  eq ((not B+) = B+) = false .
+  op _=_ : Bool Bool -> Bool [comm] .
+  op _!=_ : Bool Bool -> Bool [comm] .
+  op not_ : Bool -> Bool [ditto] .
+  op _iff_ : Bool Bool -> Bool [comm] .
+  vars B B1 B2 : Bool .
+  eq (B = B) = true .
+  eq ((not B) = B) = false .
   eq (true = false) = false .
-  eq (B1+ != B2+) = not (B1+ = B2+) .
-  eq not (not B+) = B+ .
+  eq (B1 != B2) = not (B1 = B2) .
+  eq not (not B) = B .
   eq B1 iff B2 = (B1 implies B2) and (B1 implies B2) .
 endfm
 
@@ -118,13 +110,12 @@ endfm
 
 fmod TAS-STATE is
   pr LOC-BY-PIDs .
-  pr BOOL+ .
   sort TASState .
-  op tas : Soup{LocByPid} Bool+  -> TASState [ctor] .
+  op tas : Soup{LocByPid} Bool  -> TASState [ctor] .
   op getLocByPids : TASState -> Soup{LocByPid} .
-  op getLocked : TASState -> Bool+ .
+  op getLocked : TASState -> Bool .
   var S : Soup{LocByPid} .
-  var B : Bool+ .
+  var B : Bool .
   eq getLocByPids(tas(S, B)) = S .
   eq getLocked(tas(S, B)) = B .
 endfm
@@ -147,23 +138,22 @@ fmod INV is
   pr QLOCK-STATE .
   op TAS-inv : TASState -> Bool .
   op Qlock-inv : QlockState -> Bool .
-  var QS : QlockState .
-  var TS : TASState .
-  eq Qlock-inv(QS) = count(getLocByPids(QS), cs) <= 1 .
-  eq TAS-inv(TS) = count(getLocByPids(TS), cs) <= 1 .
+  var S : Soup{LocByPid} .
+  var B : Bool .
+  var Q : Queue{Pid} .
+  eq Qlock-inv(qlock(S, Q)) = count(S, cs) <= 1 .
+  eq TAS-inv(tas(S, B)) = count(S, cs) <= 1 .
 endfm
 
 fmod CONSTANT is
-  pr PID .
   pr QUEUE{Pid} .
   pr LOC .
-  pr BOOL+ .
   ops q : -> Queue{Pid} .
   ops l : -> Loc .
-  ops b : -> Bool+ .
 endfm
 
 fmod SIM is
+  pr BOOL+ .
   pr TAS-STATE .
   pr QLOCK-STATE .
   pr INV .
@@ -172,23 +162,19 @@ fmod SIM is
   op sim : QlockState TASState -> Bool .
   var QS : QlockState .
   var TS : TASState .
-  vars P1 P2 : Pid .
-  vars L1 L2 : Loc .
-  var B : Bool+ .
+  vars S1 S2 : Soup{LocByPid} .
+  var B : Bool .
   var Q : Queue{Pid} .
-
-  eq r(QS, TS) = equals(getLocByPids(QS), getLocByPids(TS)) and 
-    ((getLocByPid(getLocByPids(QS), top(getQueue(QS))) = cs) iff (getLocked(TS) = true)) .
+  eq r(qlock(S1, Q), tas(S2, B)) = equals(S1, S2) and ((getLocByPid(S1, top(Q)) = cs) iff B) .
   eq sim(QS, TS) = r(QS, TS) implies (TAS-inv(TS) implies Qlock-inv(QS)) .
 endfm
 
 fmod TAS-OCOMP is
   pr PID .
   pr LOC .
-  pr BOOL+ .
   sort TASOComp .
   op (pc[_]:_) :  Pid Loc -> TASOComp [ctor] .
-  op (locked:_) : Bool+ -> TASOComp [ctor] .
+  op (locked:_) : Bool -> TASOComp [ctor] .
 endfm
 
 view TASOComp from TRIV to TAS-OCOMP is
@@ -203,7 +189,7 @@ fmod TAS-CONFIG is
   op {_} : Soup{TASOComp} -> TASConfig [ctor] .
   op state : TASConfig -> TASState .
   op init : -> TASConfig .
-  var B : Bool+ .
+  var B : Bool .
   vars P1 P2 : Pid .
   vars L1 L2 : Loc .
   var OCs : Soup{TASOComp} .
@@ -214,12 +200,12 @@ endfm
 mod TAS is
   pr SIM .
   inc TAS-CONFIG .
-  var B : Bool+ .
+  var B : Bool .
   vars P P1 P2 I J : Pid .
   vars L1 L2 : Loc .
   var OCs : Soup{TASOComp} .
   rl [start] : {(pc[P]: rs) OCs} => {(pc[P]: ws) OCs} .
-  crl [wait] : {(pc[P]: ws) (locked: B) OCs} => {(pc[P]: cs) (locked: true) OCs} if B == false .
+  rl [wait] : {(pc[P]: ws) (locked: false) OCs} => {(pc[P]: cs) (locked: true) OCs} .
   rl [exit] : {(pc[P]: cs) (locked: B) OCs} => {(pc[P]: rs) (locked: false) OCs} .
 endm
 
