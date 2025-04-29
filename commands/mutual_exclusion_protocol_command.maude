@@ -1,20 +1,53 @@
 load ./../specs/mutual_exclusion_protocol.maude
 load ./../simulation_checker.maude
 
+--- start
 red in SIMULATION-CHECKER-IO :
   simulate<< "SIM"   | "r" >
-           < "QLOCK" | "{(pc[i]: rs) (pc[j]: l) (queue: q)}" >
+           < "QLOCK" | "{(pc[i]: rs) (pc[j]: l) (queue: empq)}" >
            < "TAS"   | "{(pc[i]: rs) (pc[j]: l) (locked: false)}" >
            "start" > .
+red in SIMULATION-CHECKER-IO :
+  simulate<< "SIM"   | "r" >
+           < "QLOCK" | "{(pc[i]: rs) (pc[j]: l) (queue: (i | q))}" >
+           < "TAS"   | "{(pc[i]: rs) (pc[j]: l) (locked: false)}" >
+           "start" > .
+red in SIMULATION-CHECKER-IO :
+  simulate<< "SIM"   | "r" >
+           < "QLOCK" | "{(pc[i]: rs) (pc[j]: cs) (queue: (j | q))}" >
+           < "TAS"   | "{(pc[i]: rs) (pc[j]: cs) (locked: true)}" >
+           "start" > .
+red in SIMULATION-CHECKER-IO :
+  simulate<< "SIM"   | "r" >
+           < "QLOCK" | "{(pc[i]: rs) (pc[j]: notcs) (queue: (j | q))}" >
+           < "TAS"   | "{(pc[i]: rs) (pc[j]: notcs) (locked: false)}" >
+           "start" > .
 
+--- wait
 red in SIMULATION-CHECKER-IO :
   simulate<< "SIM"   | "r" >
            < "QLOCK" | "{(pc[i]: ws) (pc[j]: l) (queue: (i | q))}" >
            < "TAS"   | "{(pc[i]: ws) (pc[j]: l) (locked: false)}" >
            "wait" > .
 
+--- exit
 red in SIMULATION-CHECKER-IO :
   simulate<< "SIM"   | "r" >
-           < "QLOCK" | "{(pc[i]: cs) (pc[j]: l) (queue: (i | q))}" >
+           < "QLOCK" | "{(pc[i]: cs) (pc[j]: l) (queue: (i | empq))}" >
            < "TAS"   | "{(pc[i]: cs) (pc[j]: l) (locked: true)}" >
+           "exit" > .
+red in SIMULATION-CHECKER-IO :
+  simulate<< "SIM"   | "r" >
+           < "QLOCK" | "{(pc[i]: cs) (pc[j]: l) (queue: (i | i | q))}" >
+           < "TAS"   | "{(pc[i]: cs) (pc[j]: l) (locked: true)}" >
+           "exit" > .
+red in SIMULATION-CHECKER-IO :
+  simulate<< "SIM"   | "r" >
+           < "QLOCK" | "{(pc[i]: cs) (pc[j]: cs) (queue: (i | j | q))}" >
+           < "TAS"   | "{(pc[i]: cs) (pc[j]: cs) (locked: true)}" >
+           "exit" > .
+red in SIMULATION-CHECKER-IO :
+  simulate<< "SIM"   | "r" >
+           < "QLOCK" | "{(pc[i]: cs) (pc[j]: notcs) (queue: (i | j | q))}" >
+           < "TAS"   | "{(pc[i]: cs) (pc[j]: notcs) (locked: true)}" >
            "exit" > .

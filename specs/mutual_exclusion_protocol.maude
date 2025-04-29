@@ -50,13 +50,16 @@ endfm
 
 fmod LOC is
   sort Loc .
-  ops rs ws cs none : -> Loc [ctor] .
+  ops rs ws cs notcs none : -> Loc [ctor] .
   op _=_ : Loc Loc -> Bool [comm] .
   var L : Loc .
   eq (L = L) = true .
   eq (rs = ws) = false .
   eq (rs = cs) = false .
+  eq (rs = notcs) = true .
   eq (ws = cs) = false .
+  eq (ws = notcs) = true .
+  eq (cs = notcs) = false .
 endfm
 
 fmod LOC-BY-PID is
@@ -165,7 +168,8 @@ fmod SIM is
   vars S1 S2 : Soup{LocByPid} .
   var B : Bool .
   var Q : Queue{Pid} .
-  eq r(qlock(S1, Q), tas(S2, B)) = equals(S1, S2) and ((getLocByPid(S1, top(Q)) = cs) iff B) .
+  ceq r(qlock(S1, Q), tas(S2, B)) = equals(S1, S2) if isEmpty(Q) .
+  ceq r(qlock(S1, Q), tas(S2, B)) = equals(S1, S2) and ((getLocByPid(S1, top(Q)) = cs) iff B) if not isEmpty(Q) .
   eq sim(QS, TS) = r(QS, TS) implies (TAS-inv(TS) implies Qlock-inv(QS)) .
 endfm
 
