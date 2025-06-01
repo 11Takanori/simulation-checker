@@ -399,6 +399,7 @@ fmod CONSTANT is
   ex QUEUE{Ack} .
 
   ops i i1 i2 j k seq eASeq wc eFSeq : -> Nat+ .
+  ops bool1 bool2 : -> Bool+ .
   ops list : -> List{Nat+} .
   ops pcell pcell1 pcell2 : -> PCell .
   ops bcell bcell1 bcell2 : -> BCell .
